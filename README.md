@@ -1,1 +1,1 @@
-# Staking DApp
+# Staking dApp
