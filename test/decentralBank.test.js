@@ -73,6 +73,12 @@ contract('decentralBank', ([owner, customer]) => {
       // is staking balance
       result = await decentralBank.isStaking(customer)
       assert.equal(result.toString(), 'true', 'customer isStaking status after staking')
+
+      // issue reward tokens
+      await decentralBank.issueTokens({from:owner})
+
+      // ensure only owner cn issue token
+      await decentralBank.issueTokens({from:customer}).should.be.rejected;
     })
   })
 })
