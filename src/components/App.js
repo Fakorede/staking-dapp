@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import Web3 from 'web3';
 import './App.css';
 import Navbar from './Navbar';
+import Main from './Main';
 import Tether from '../truffle_abis/Tether.json';
 import Reward from '../truffle_abis/Reward.json';
 import DecentralBank from '../truffle_abis/DecentralBank.json';
@@ -53,7 +54,6 @@ class App extends Component {
 
       let tetherBalance = await tether.methods.balanceOf(this.state.account).call();
       this.setState({tetherBalance: tetherBalance.toString()});
-      console.log({tbalance: tetherBalance});
     } else {
       console.log('Error! Tether contract not deployed - no detected network');
     }
@@ -66,7 +66,6 @@ class App extends Component {
 
       let rewardBalance = await reward.methods.balanceOf(this.state.account).call();
       this.setState({rewardBalance: rewardBalance.toString()});
-      console.log({rwdbalance: rewardBalance});
     } else {
       console.log('Error! Reward contract not deployed - no detected network');
     }
@@ -79,7 +78,6 @@ class App extends Component {
 
       let stakingBalance = await decentralBank.methods.stakingBalance(this.state.account).call();
       this.setState({stakingBalance: stakingBalance.toString()});
-      console.log({sbalance: stakingBalance});
     } else {
       console.log('Error! Reward contract not deployed - no detected network');
     }
@@ -87,12 +85,53 @@ class App extends Component {
     this.setState({loading: false});
   }
 
+  // stake tokens
+  stakeTokens = (amount) => {
+    this.setState({loading: true });
+    this.state.tether.methods.approve(this.state.decentralBank._address, amount).send({from: this.state.account}).on('transactionHash', (hash) => {
+      this.state.decentralBank.methods.depositToken(amount).send({from: this.state.account}).on('transactionHash', (hash) => {
+        this.setState({loading: false });
+      });
+    });
+  } 
+
+  // unstake tokens
+  unstakeTokens = () => {
+    this.setState({loading: true });
+    this.state.decentralBank.methods.unstakeTokens().send({from: this.state.account}).on('transactionHash', (hash) => {
+      this.setState({loading: false });
+    });
+  }
+
 
   render() {
+    let content;
+    /* eslint-disable no-lone-blocks */
+    {this.state.loading 
+      ? content = <p id="loader" className='text-center' style={{color:'white', margin:'30px'}}>LOADING PLEASE...</p> 
+      : content = 
+        <Main
+          tetherBalance={this.state.tetherBalance}
+          rewardBalance={this.state.rewardBalance}
+          stakingBalance={this.state.stakingBalance}
+          stakeTokens={this.stakeTokens}
+          unstakeTokens={this.unstakeTokens}
+          decentralBankContract={this.decentralBank}
+        />
+      }
+
     return (
       <div>
         <Navbar account={this.state.account} />
-        <div>Hello</div>
+        <div className="container-fluid mt-5">
+          <div className="row">
+            <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '600px', minHeight: '100vm'}}>
+              <div>
+                {content}
+              </div>
+            </main>
+          </div>
+        </div>
       </div>
     );
   }
